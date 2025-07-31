@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI互动小游戏</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet"/>
+
+  <!-- 配置Tailwind自定义颜色和字体 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF6B8B', 
+            secondary: '#8A94FF', 
+            accent: '#FFD166', 
+            light: '#FFF5F8', 
+            dark: '#5A4B81' 
+          },
+          fontFamily: {
+            comic: ['Comic Sans MS', 'Marker Felt', 'cursive', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .text-shadow-cute {
+        text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.5);
+      }
+      .game-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+      }
+      .game-card:hover {
+        transform: translateY(-6px); 
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); 
+      }
+      .bg-gradient-cute {
+        background: linear-gradient(135deg, #FFD6E0 0%, #E1D5FF 100%);
+      }
+      .bounce-in {
+        animation: bounce-in 0.8s cubic-bezier(0.215, 0.610, 0.355, 1.000) forwards;
+        opacity: 0;
+      }
+      .float {
+        animation: float 3s ease-in-out infinite;
+      }
+      .star {
+        position: absolute;
+        color: #FFD166;
+        text-shadow: 0 0 6px rgba(255, 209, 102, 0.8);
+        opacity: 0;
+        animation: twinkle 3s infinite;
+      }
+      .cloud {
+        position: absolute;
+        opacity: 0.7;
+        animation: drift 30s linear infinite;
+      }
+
+      @keyframes bounce-in {
+        0% {
+          transform: scale(0.3);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        70% {
+          transform: scale(0.9);
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      @keyframes float {
+        0% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-8px); 
+        }
+        100% {
+          transform: translateY(0px);
+        }
+      }
+
+      @keyframes twinkle {
+        0%, 100% {
+          opacity: 0;
+          transform: scale(0.8);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.2);
+        }
+      }
+
+      @keyframes drift {
+        0% {
+          transform: translateX(-100%) translateY(0);
+        }
+        100% {
+          transform: translateX(100vw) translateY(0);
+        }
+      }
+    }
+  </style>
+</head>
+<body class="bg-gradient-cute min-h-screen font-comic text-dark relative overflow-x-hidden flex flex-col items-center justify-center p-4">
+  <!-- 装饰元素 -->
+  <div class="star" style="top: 10%; left: 80%; animation-delay: 0s; font-size: 1.5rem;">★</div>
+  <div class="star" style="top: 25%; left: 10%; animation-delay: 0.5s; font-size: 1rem;">★</div>
+  <div class="star" style="top: 70%; left: 90%; animation-delay: 1s; font-size: 1.2rem;">★</div>
+  <div class="star" style="top: 40%; left: 20%; animation-delay: 1.5s; font-size: 0.8rem;">★</div>
+  <div class="star" style="top: 60%; left: 70%; animation-delay: 2s; font-size: 1rem;">★</div>
+
+  <div class="cloud float" style="top: 15%; left: -200px; font-size: 3rem; color: rgba(255, 255, 255, 0.8);">☁️</div>
+  <div class="cloud float" style="top: 5%; left: -300px; animation-delay: 10s; font-size: 2.5rem; color: rgba(255, 255, 255, 0.7);">☁️</div>
+
+  <!-- 页面标题 -->
+  <header class="text-center mb-8 md:mb-12 bounce-in w-full" style="animation-delay: 0.2s">
+    <h1 class="text-[clamp(2.2rem,8vw,4rem)] font-bold text-primary text-shadow-cute mb-4">
+      AI互动小游戏
+    </h1>
+    <p class="text-dark/80 text-lg md:text-xl max-w-2xl mx-auto bg-white/50 backdrop-blur-sm px-6 py-3 rounded-full inline-block">
+      选择喜欢的游戏，开始快乐学习吧！
+    </p>
+  </header>
+
+  <!-- 游戏选择区 -->
+  <main class="w-full max-w-xl grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12 px-4">
+    <!-- 汉字消消乐卡片 -->
+    <div class="game-card bg-white rounded-3xl p-6 shadow-xl bounce-in border-4 border-primary flex flex-col items-center" style="animation-delay: 0.4s">
+      <div class="absolute -top-4 -right-4 bg-accent text-white rounded-full w-12 h-12 flex items-center justify-center text-xl shadow-md">
+        <i class="fa fa-star"></i>
+      </div>
+      <h2 class="text-2xl md:text-3xl font-bold text-center mb-3 text-primary">汉字消消乐</h2>
+      <p class="text-dark/70 text-center mb-6">找出能组成词语的汉字对，<br>锻炼你的汉字能力哦！</p>
+      <a href="hanzi.html" class="block w-full text-center bg-primary hover:bg-pink-500 text-white font-bold py-3 px-6 rounded-full transition-all duration-300">
+        <i class="fa fa-gamepad mr-2"></i> 开始游戏
+      </a>
+    </div>
+
+    <!-- 记忆小金鱼卡片 -->
+    <div class="game-card bg-white rounded-3xl p-6 shadow-xl bounce-in border-4 border-secondary flex flex-col items-center" style="animation-delay: 0.6s">
+      <div class="absolute -top-4 -right-4 bg-accent text-white rounded-full w-12 h-12 flex items-center justify-center text-xl shadow-md">
+        <i class="fa fa-heart"></i>
+      </div>
+      <h2 class="text-2xl md:text-3xl font-bold text-center mb-3 text-secondary">记忆小金鱼</h2>
+      <p class="text-dark/70 text-center mb-6">匹配英文单词和中文意思，<br>挑战你的词汇量吧！</p>
+      <a href="danci.html" class="block w-full text-center bg-secondary hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-full transition-all duration-300">
+        <i class="fa fa-gamepad mr-2"></i> 开始游戏
+      </a>
+    </div>
+  </main>
+
+  <!-- 装饰图案 -->
+  <div class="flex justify-center gap-3 mb-10">
+    <span class="text-accent text-2xl animate-bounce">✨</span>
+    <span class="text-primary text-2xl animate-bounce" style="animation-delay: 0.2s">🌸</span>
+    <span class="text-secondary text-2xl animate-bounce" style="animation-delay: 0.4s">🎈</span>
+    <span class="text-accent text-2xl animate-bounce" style="animation-delay: 0.6s">💖</span>
+    <span class="text-primary text-2xl animate-bounce" style="animation-delay: 0.8s">✨</span>
+  </div>
+
+  <!-- 页脚 -->
+  <footer class="text-center text-dark/60 text-sm bounce-in pb-6" style="animation-delay: 0.8s">
+    <p>✨ 快乐学习，趣味成长 ✨</p>
+  </footer>
+</body>
+</html>

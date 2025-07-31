@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汉字消消乐 - 一年级版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B8B',
+                        secondary: '#6BCB77',
+                        accent: '#FFD93D',
+                        light: '#FFF9E6',
+                        dark: '#4D5382'
+                    },
+                    fontFamily: {
+                        comic: ['Comic Sans MS', 'cursive', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            }
+            .card-shadow {
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            }
+            .bounce-hover {
+                transition: transform 0.3s ease;
+            }
+            .bounce-hover:hover {
+                transform: translateY(-5px);
+            }
+            .timer-warning {
+                animation: pulse-warning 1s infinite alternate;
+            }
+            @keyframes pulse-warning {
+                from { color: #FF6B8B; }
+                to { color: #ff0000; }
+            }
+            .pulse-scale {
+                animation: pulse-scale 1.5s infinite alternate;
+            }
+            @keyframes pulse-scale {
+                from { transform: scale(1); }
+                to { transform: scale(1.05); }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-light to-blue-50 min-h-screen font-comic text-dark">
+    <!-- 游戏标题区 -->
+    <header class="py-6 px-4 text-center">
+        <h1 class="text-[clamp(2rem,5vw,3rem)] font-bold text-primary text-shadow mb-2">
+            <i class="fa fa-star text-accent animate-pulse"></i> 汉字消消乐 <i class="fa fa-star text-accent animate-pulse"></i>
+        </h1>
+        <p class="text-lg text-dark/80 max-w-md mx-auto">
+            找出能组成词语的两个字，点击它们就能消除哦！
+        </p>
+    </header>
+
+    <!-- 开始游戏界面 -->
+    <div id="start-screen" class="max-w-2xl mx-auto px-4 py-12 text-center">
+        <div class="bg-white rounded-3xl p-8 card-shadow pulse-scale">
+            <div class="text-8xl mb-6 text-primary">
+                <i class="fa fa-gamepad"></i>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-bold mb-4">准备好开始游戏了吗？</h2>
+            <p class="text-dark/80 mb-8 max-w-md mx-auto">
+                你需要在30秒内找出所有能组成词语的汉字对，加油哦！
+            </p>
+            <button id="start-btn" class="bg-primary hover:bg-pink-500 text-white font-bold py-3 px-10 rounded-full transition-all duration-300 card-shadow text-lg">
+                <i class="fa fa-play mr-2"></i> 开始游戏
+            </button>
+        </div>
+    </div>
+
+    <!-- 游戏状态区 -->
+    <div id="game-status" class="max-w-md mx-auto px-4 mb-6 flex justify-between items-center flex-wrap gap-3 hidden">
+        <div class="bg-white rounded rounded-full px-4 py-2 card-shadow">
+            <span>剩余：</span>
+            <span id="remaining-count" class="font-bold text-primary">16</span>
+        </div>
+        <div class="bg-white rounded rounded-full px-4 py-2 card-shadow">
+            <i class="fa fa-clock-o text-primary mr-1"></i>
+            <span>时间：</span>
+            <span id="timer" class="font-bold text-primary">30</span>
+            <span>秒</span>
+        </div>
+        <button id="restart-btn" class="bg-accent hover:bg-amber-400 text-dark font-bold py-2 px-6 rounded-full transition-all duration-300 card-shadow">
+            <i class="fa fa-refresh mr-1"></i> 重新开始
+        </button>
+    </div>
+
+    <!-- 游戏主区域 -->
+    <main id="game-area" class="max-w-2xl mx-auto px-4 mb-12 hidden">
+        <!-- 游戏卡片网格 -->
+        <div id="game-board" class="grid grid-cols-4 gap-3 md:gap-4">
+            <!-- 卡片将通过JavaScript动态生成 -->
+        </div>
+        
+        <!-- 选中的字显示区 -->
+        <div id="selected-words" class="mt-6 text-center h-12 flex justify-center items-center gap-4 text-xl font-bold">
+            <span id="first-selected" class="min-w-[40px] h-[40px] rounded-full flex items-center justify-center bg-white/50"></span>
+            <span class="text-gray-400">+</span>
+            <span id="second-selected" class="min-w-[40px] h-[40px] rounded-full flex items-center justify-center bg-white/50"></span>
+        </div>
+    </main>
+
+    <!-- 结果弹窗 -->
+    <div id="result-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 text-center transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
+            <div id="success-icon" class="text-secondary text-6xl mb-4 hidden">
+                <i class="fa fa-trophy"></i>
+            </div>
+            <div id="try-again-icon" class="text-primary text-6xl mb-4 hidden">
+                <i class="fa fa-smile-o"></i>
+            </div>
+            <div id="time-up-icon" class="text-orange-500 text-6xl mb-4 hidden">
+                <i class="fa fa-clock-o"></i>
+            </div>
+            <h2 id="modal-title" class="text-2xl font-bold mb-3"></h2>
+            <p id="modal-message" class="mb-6"></p>
+            <button id="modal-btn" class="bg-primary hover:bg-pink-500 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 card-shadow">
+                再来一次
+            </button>
+        </div>
+    </div>
+
+    <!-- 游戏说明 -->
+    <footer class="bg-white/80 backdrop-blur-sm py-4 px-6 rounded-t-3xl max-w-2xl mx-auto mb-6">
+        <h3 class="font-bold text-center mb-2">游戏说明</h3>
+        <ul class="text-sm space-y-1 text-center">
+            <li>1. 点击一个字，再点击另一个字</li>
+            <li>2. 如果它们能组成词语，就会一起消失</li>
+            <li>3. 要在30秒内把所有字都消除哦！</li>
+        </ul>
+    </footer>
+
+    <script>
+        // 一年级生字和可组成的词语
+        const wordPairs = {
+            "爸": ["妈"],
+            "妈": ["爸"],
+            "哥": ["哥", "姐"],  // 可以组成"哥哥"和"哥姐"
+            "姐": ["哥", "姐"],  // 可以组成"姐姐"和"哥姐"
+            "书": ["本"],
+            "本": ["书"],
+            "笔": ["尺"],
+            "尺": ["笔"],
+            "小": ["大"],
+            "大": ["小"],
+            "上": ["下"],
+            "下": ["上"],
+            "花": ["草"],
+            "草": ["花"],
+            "鸟": ["虫"],
+            "虫": ["鸟"],
+            // 新增生字组，增加多样性
+            "日": ["月"],
+            "月": ["日"],
+            "水": ["火"],
+            "火": ["水"],
+            "多": ["少"],
+            "少": ["多"],
+            "左": ["右"],
+            "右": ["左"]
+        };
+        
+        // 所有可能的汉字组，每次游戏随机选择一组
+        const characterGroups = [
+            ["爸", "妈", "哥", "姐", "书", "本", "笔", "尺", "小", "大", "上", "下", "花", "草", "鸟", "虫"],
+            ["日", "月", "水", "火", "多", "少", "左", "右", "书", "本", "笔", "尺", "小", "大", "上", "下"],
+            ["爸", "妈", "哥", "姐", "日", "月", "水", "火", "多", "少", "左", "右", "花", "草", "鸟", "虫"]
+        ];
+        
+        // 游戏状态
+        let gameState = {
+            selected: [],
+            matched: [],
+            remaining: 16,
+            previousGroupIndex: -1,  // 记录上一轮使用的汉字组索引
+            currentCharacters: [],    // 当前使用的汉字组
+            timeRemaining: 30,        // 剩余时间（秒）
+            timerInterval: null       // 计时器
+        };
+        
+        // DOM 元素
+        const gameBoard = document.getElementById('game-board');
+        const remainingCount = document.getElementById('remaining-count');
+        const restartBtn = document.getElementById('restart-btn');
+        const firstSelected = document.getElementById('first-selected');
+        const secondSelected = document.getElementById('second-selected');
+        const resultModal = document.getElementById('result-modal');
+        const modalContent = document.getElementById('modal-content');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalBtn = document.getElementById('modal-btn');
+        const successIcon = document.getElementById('success-icon');
+        const tryAgainIcon = document.getElementById('try-again-icon');
+        const timeUpIcon = document.getElementById('time-up-icon');
+        const timerElement = document.getElementById('timer');
+        const startScreen = document.getElementById('start-screen');
+        const startBtn = document.getElementById('start-btn');
+        const gameStatus = document.getElementById('game-status');
+        const gameArea = document.getElementById('game-area');
+        
+        // 开始游戏
+        function startGame() {
+            // 隐藏开始界面，显示游戏界面
+            startScreen.classList.add('hidden');
+            gameStatus.classList.remove('hidden');
+            gameArea.classList.remove('hidden');
+            
+            // 初始化游戏
+            initGame();
+        }
+        
+        // 初始化游戏
+        function initGame() {
+            // 清除之前的计时器
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            
+            // 选择与上一轮不同的汉字组
+            let groupIndex;
+            do {
+                groupIndex = Math.floor(Math.random() * characterGroups.length);
+            } while (groupIndex === gameState.previousGroupIndex && characterGroups.length > 1);
+            
+            // 更新游戏状态
+            gameState.previousGroupIndex = groupIndex;
+            gameState.currentCharacters = characterGroups[groupIndex];
+            gameState.selected = [];
+            gameState.matched = [];
+            gameState.remaining = gameState.currentCharacters.length;
+            gameState.timeRemaining = 30;
+            
+            // 更新显示
+            remainingCount.textContent = gameState.remaining;
+            timerElement.textContent = gameState.timeRemaining;
+            timerElement.classList.remove('timer-warning');
+            
+            // 清空游戏板
+            gameBoard.innerHTML = '';
+            
+            // 清空选中显示
+            firstSelected.textContent = '';
+            secondSelected.textContent = '';
+            
+            // 打乱汉字顺序
+            const shuffled = [...gameState.currentCharacters].sort(() => Math.random() - 0.5);
+            
+            // 创建卡片
+            shuffled.forEach((char, index) => {
+                const card = document.createElement('div');
+                card.className = `
+                    bg-white rounded-xl h-16 md:h-20 flex items-center justify-center 
+                    text-2xl md:text-4xl font-bold cursor-pointer transition-all duration-300
+                    card-shadow bounce-hover
+                    ${getRandomColorClass()}
+                `;
+                card.dataset.character = char;
+                card.dataset.index = index;
+                card.textContent = char;
+                
+                // 添加点击事件
+                card.addEventListener('click', () => handleCardClick(card));
+                
+                gameBoard.appendChild(card);
+            });
+            
+            // 启动计时器
+            startTimer();
+        }
+        
+        // 启动计时器
+        function startTimer() {
+            gameState.timerInterval = setInterval(() => {
+                gameState.timeRemaining--;
+                timerElement.textContent = gameState.timeRemaining;
+                
+                // 时间少于10秒时添加警告效果
+                if (gameState.timeRemaining <= 10) {
+                    timerElement.classList.add('timer-warning');
+                }
+                
+                // 时间到
+                if (gameState.timeRemaining <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    showTimeUpModal();
+                }
+            }, 1000);
+        }
+        
+        // 获取随机颜色类
+        function getRandomColorClass() {
+            const colors = [
+                'text-pink-500 bg-pink-50',
+                'text-blue-500 bg-blue-50',
+                'text-green-500 bg-green-50',
+                'text-purple-500 bg-purple-50',
+                'text-yellow-500 bg-yellow-50',
+                'text-orange-500 bg-orange-50'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        // 处理卡片点击
+        function handleCardClick(card) {
+            // 如果已经匹配或已经选中，不做处理
+            if (gameState.matched.includes(card.dataset.index) || 
+                gameState.selected.includes(card.dataset.index)) {
+                return;
+            }
+            
+            // 添加选中状态
+            card.classList.add('scale-110', 'ring-4', 'ring-accent');
+            
+            // 记录选中的卡片
+            gameState.selected.push(card.dataset.index);
+            
+            // 更新选中显示
+            if (gameState.selected.length === 1) {
+                firstSelected.textContent = card.dataset.character;
+                firstSelected.className = `min-w-[40px] h-[40px] rounded-full flex items-center justify-center ${card.classList[6]}`;
+            } else if (gameState.selected.length === 2) {
+                secondSelected.textContent = card.dataset.character;
+                secondSelected.className = `min-w-[40px] h-[40px] rounded-full flex items-center justify-center ${card.classList[6]}`;
+                
+                // 检查是否匹配
+                setTimeout(checkMatch, 500);
+            }
+        }
+        
+        // 检查是否匹配
+        function checkMatch() {
+            const [firstIndex, secondIndex] = gameState.selected;
+            const firstCard = document.querySelector(`[data-index="${firstIndex}"]`);
+            const secondCard = document.querySelector(`[data-index="${secondIndex}"]`);
+            const firstChar = firstCard.dataset.character;
+            const secondChar = secondCard.dataset.character;
+            
+            // 检查是否能组成词语
+            if (wordPairs[firstChar] && wordPairs[firstChar].includes(secondChar)) {
+                // 匹配成功
+                firstCard.classList.remove('scale-110', 'ring-4', 'ring-accent');
+                secondCard.classList.remove('scale-110', 'ring-4', 'ring-accent');
+                firstCard.classList.add('opacity-0', 'scale-50');
+                secondCard.classList.add('opacity-0', 'scale-50');
+                
+                // 添加到匹配列表
+                gameState.matched.push(firstIndex, secondIndex);
+                
+                // 更新剩余计数
+                gameState.remaining -= 2;
+                remainingCount.textContent = gameState.remaining;
+                
+                // 播放成功音效（这里用视觉效果代替）
+                createConfetti(firstCard.offsetLeft, firstCard.offsetTop);
+                createConfetti(secondCard.offsetLeft, secondCard.offsetTop);
+                
+                // 检查是否通关
+                if (gameState.remaining === 0) {
+                    clearInterval(gameState.timerInterval);
+                    setTimeout(showSuccessModal, 500);
+                }
+            } else {
+                // 匹配失败
+                firstCard.classList.remove('ring-accent');
+                secondCard.classList.remove('ring-accent');
+                firstCard.classList.add('ring-4', 'ring-red-300');
+                secondCard.classList.add('ring-4', 'ring-red-300');
+                
+                // 一段时间后取消选中状态
+                setTimeout(() => {
+                    firstCard.classList.remove('scale-110', 'ring-4', 'ring-red-300');
+                    secondCard.classList.remove('scale-110', 'ring-4', 'ring-red-300');
+                }, 800);
+            }
+            
+            // 重置选中状态
+            gameState.selected = [];
+            
+            // 清空选中显示
+            setTimeout(() => {
+                firstSelected.textContent = '';
+                secondSelected.textContent = '';
+                firstSelected.className = 'min-w-[40px] h-[40px] rounded-full flex items-center justify-center bg-white/50';
+                secondSelected.className = 'min-w-[40px] h-[40px] rounded-full flex items-center justify-center bg-white/50';
+            }, 500);
+        }
+        
+        // 创建庆祝效果
+        function createConfetti(x, y) {
+            const confettiCount = 15;
+            const colors = ['#FF6B8B', '#6BCB77', '#FFD93D', '#4D5382', '#7B61FF'];
+            
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'absolute w-3 h-3 rounded-full';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = `${x}px`;
+                confetti.style.top = `${y}px`;
+                confetti.style.zIndex = '10';
+                confetti.style.position = 'absolute';
+                confetti.style.animation = `confetti ${1 + Math.random() * 2}s linear forwards`;
+                confetti.style.transform = `translate(-50%, -50%)`;
+                
+                // 随机方向
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 30 + Math.random() * 40;
+                confetti.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
+                confetti.style.setProperty('--dy', `${Math.sin(angle) * distance}px`);
+                
+                document.body.appendChild(confetti);
+                
+                // 动画结束后移除
+                setTimeout(() => {
+                    confetti.remove();
+                }, 3000);
+            }
+        }
+        
+        // 添加庆祝动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes confetti {
+                0% {
+                    transform: translate(-50%, -50%) scale(1);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.3);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // 显示成功弹窗
+        function showSuccessModal() {
+            // 成功的表扬语
+            const successMessages = [
+                "太棒了！你真是汉字小能手！",
+                "哇塞！你太厉害了，全部都找对了！",
+                "太优秀了！这么快就完成了，真棒！",
+                "恭喜你通关啦！你是汉字小天才！",
+                "太了不起了！在规定时间内完成了挑战！"
+            ];
+            
+            // 随机选择一条表扬语
+            const randomMessage = successMessages[Math.floor(Math.random() * successMessages.length)];
+            
+            modalTitle.textContent = "恭喜通关！";
+            modalMessage.textContent = randomMessage + " 新一轮游戏会有不同的汉字哦！";
+            successIcon.classList.remove('hidden');
+            tryAgainIcon.classList.add('hidden');
+            timeUpIcon.classList.add('hidden');
+            
+            // 显示弹窗
+            resultModal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+        
+        // 显示时间到弹窗
+        function showTimeUpModal() {
+            // 时间到的鼓励语
+            const timeUpMessages = [
+                "时间到啦！别灰心，再试一次肯定能更快！",
+                "哎呀，时间不够了！多练习几次就能熟练啦！",
+                "没关系，下次一定能在规定时间内完成的！",
+                "时间过得真快！再试一次，相信你会更棒！"
+            ];
+            
+            // 随机选择一条鼓励语
+            const randomMessage = timeUpMessages[Math.floor(Math.random() * timeUpMessages.length)];
+            
+            modalTitle.textContent = "时间到！";
+            modalMessage.textContent = randomMessage;
+            successIcon.classList.add('hidden');
+            tryAgainIcon.classList.add('hidden');
+            timeUpIcon.classList.remove('hidden');
+            
+            // 显示弹窗
+            resultModal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+        
+        // 显示鼓励弹窗（当用户想放弃时）
+        function showEncourageModal() {
+            // 鼓励语
+            const encourageMessages = [
+                "别灰心！再仔细看看，比如“爸”和“妈”能组成“爸妈”哦！",
+                "没关系，再试一次吧！“书”和“本”可以组成“书本”呢！",
+                "加油呀！你离成功不远了，“小”和“大”是一对哦！",
+                "不要放弃！再找找看，“花”和“草”能组成词语呢！",
+                "你已经很棒了！再试一次，相信你一定能成功！"
+            ];
+            
+            // 随机选择一条鼓励语
+            const randomMessage = encourageMessages[Math.floor(Math.random() * encourageMessages.length)];
+            
+            modalTitle.textContent = "继续加油！";
+            modalMessage.textContent = randomMessage;
+            successIcon.classList.add('hidden');
+            tryAgainIcon.classList.remove('hidden');
+            timeUpIcon.classList.add('hidden');
+            
+            // 显示弹窗
+            resultModal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+        
+        // 关闭弹窗并重新开始游戏
+        function closeModal() {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                resultModal.classList.add('hidden');
+                initGame(); // 重新开始游戏
+            }, 300);
+        }
+        
+        // 事件监听
+        startBtn.addEventListener('click', startGame);
+        
+        restartBtn.addEventListener('click', () => {
+            clearInterval(gameState.timerInterval);
+            if (gameState.remaining < gameState.currentCharacters.length) {
+                showEncourageModal();
+            } else {
+                initGame();
+            }
+        });
+        
+        modalBtn.addEventListener('click', closeModal);
+    </script>
+</body>
+</html>
+
